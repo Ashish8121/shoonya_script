@@ -23,7 +23,7 @@ headers = ['Date','Additional segment', 'Bank', 'Close account', 'Enable exchang
 sheet.update(values=[headers], range_name='A1:K1')
 
 today = datetime.date.today()
-st.title('Ticket Entry App')
+st.title('Ticket tracking App')
 
 additional_segment = st.number_input('Additional segments', value=0)
 bank_account = st.number_input('Bank account', value=0)

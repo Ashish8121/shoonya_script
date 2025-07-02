@@ -2,3 +2,5 @@ gspread
 pandas
 datetime
 oauth2client
+google-auth
+streamlit 

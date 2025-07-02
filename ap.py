@@ -2,91 +2,99 @@ import pandas as pd
 import datetime
 import streamlit as st
 import os
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
-st.title("Daily Ticket Entry App")
+# ✅ Load credentials from Streamlit secrets
+service_account_info = json.loads(st.secrets["gcp_service_account"])
 
-# File name
-file_name = 'tickets_summary.csv'
+# ✅ Define scope
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
-# Today's date
+# ✅ Authenticate using from_json_keyfile_dict
+creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
+client = gspread.authorize(creds)
+
+# ✅ Open your Google Sheet as before
+sheet = client.open("streamlit").worksheet("Sheet1")
+
+records = sheet.get_all_records()
+headers = ['Date','Additional segment', 'Bank', 'Close account', 'Enable exchange', 'Reactivation' ,'Email', 'Mobile Number','Other', 'Complaints']
+sheet.update(values=[headers], range_name='A1:K1')
+
 today = datetime.date.today()
 
-# Initialize default values
-defaults = {
-    'Additional segment tickets': 0,
-    'Bank': 0,
-    'Close account': 0,
-    'Enable exchange': 0,
-    'Reactivation': 0,
-    'Email': 0,
-    'Mobile Number': 0,
-    'Other': 0,
-    'Complaints': 0
-}
-
-# Check if file exists and today's data exists
-if os.path.isfile(file_name):
-    old_data = pd.read_csv(file_name)
-    old_data['Date'] = pd.to_datetime(old_data['Date']).dt.date
-
-    if today in old_data['Date'].values:
-        # Load today's data as defaults
-        today_data = old_data[old_data['Date'] == today].iloc[0]
-        defaults = {
-            'Additional segment tickets': int(today_data['Additional segment tickets']),
-            'Bank': int(today_data['Bank']),
-            'Close account': int(today_data['Close account']),
-            'Enable exchange': int(today_data['Enable exchange']),
-            'Reactivation': int(today_data['Reactivation']),
-            'Email': int(today_data['Email']),
-            'Mobile Number': int(today_data['Mobile Number']),
-            'Other': int(today_data['Other']),
-            'Complaints': int(today_data['Complaints'])
-        }
-
-# Inputs with loaded defaults
-additional_segment = st.number_input('Additional segments', value=defaults['Additional segment tickets'])
-bank_account = st.number_input('Bank account', value=defaults['Bank'])
-close_account = st.number_input('Closed', value=defaults['Close account'])
-enable_exchange = st.number_input('Enable exchange', value=defaults['Enable exchange'])
-reactivation = st.number_input('Reactivation', value=defaults['Reactivation'])
-email = st.number_input('Email change ', value=defaults['Email'])
-mobile_number = st.number_input('Mobile number ', value=defaults['Mobile Number'])
-complaints = st.number_input('Complaint', value=defaults['Complaints'])
-other = st.number_input('Other tickets', value=defaults['Other'])
-email_related_shoonya = st.number_input('Emails related to shoonya', value=defaults['Other'])
+additional_segment = st.number_input('Additional segments', value=0)
+bank_account = st.number_input('Bank account', value=0)
+close_account = st.number_input('Closed accounts', value=0)
+enable_exchange = st.number_input('Enable exchange', value=0)
+reactivation = st.number_input('Reactivation', value=0)
+email = st.number_input('Email change', value=0)
+mobile_number = st.number_input('Mobile number change', value=0)
+other = st.number_input('Other tickets', value=0)
+complaints = st.number_input('Complaints', value=0)
+emails_related_shoonya = st.number_input('Emails related to shoonya', value=0)
 
 
-# Create new data entry
-new_data = pd.DataFrame({
-    'Date': [today],
-    'Additional segment tickets': [additional_segment],
-    'Bank': [bank_account],
-    'Close account': [close_account],
-    'Enable exchange': [enable_exchange],
-    'Reactivation': [reactivation],
-    'Email': [email],
-    'Mobile Number': [mobile_number], 
-    'Other': [other], 
-    'Complaints': [complaints], 
-    'Emails related to shoonya': [email_related_shoonya]
-})
 
-# Update logic
-if os.path.isfile(file_name):
-    if today in old_data['Date'].values:
-        # Update existing today's row
-        for col in new_data.columns:
-            old_data.loc[old_data['Date'] == today, col] = new_data[col].values[0]
-        updated_data = old_data
+if st.button("Submit"):
+    # Prepare data row matching your headers
+    data_row = [
+        str(today),  # Date as string
+        str(additional_segment),
+        str(bank_account),
+        str(close_account),
+        str(enable_exchange),
+        str(reactivation),
+        str(email),
+        str(mobile_number),
+        str(other),
+        str(complaints),
+        str(emails_related_shoonya)
+    ]
+
+    # ✅ Fetch all records to check existing dates
+    records = sheet.get_all_records()
+
+    # ✅ Convert records to list of dates
+    dates = [str(row['Date']) for row in records]
+
+    if str(today) in dates:
+        # 🔷 If today's date exists, update that row
+        row_number = dates.index(str(today)) + 2  # +2 because sheet rows are 1-indexed and header is row 1
+        sheet.update(f'A{row_number}:K{row_number}', [data_row])
+        st.success("✅ Existing entry updated for today.")
     else:
-        # Append new row
-        updated_data = pd.concat([old_data, new_data], ignore_index=True)
-else:
-    updated_data = new_data
+        # 🔷 If today's date does not exist, append new row
+        sheet.append_row(data_row)
+        st.success("✅ New entry added to Google Sheet.")
 
-# Save updated data to CSV
-updated_data.to_csv(file_name, index=False)
+# 🔷 **Optional: Display current data**
+records = sheet.get_all_records()
+st.dataframe(records)
 
-# Display updated data
-st.dataframe(updated_data)
+# 🔷 Download CSV button
+import pandas as pd
+df = pd.DataFrame(records)
+csv = df.to_csv(index=False).encode('utf-8')
+st.download_button(
+    label="Download Google Sheet as CSV",
+    data=csv,
+    file_name='google_sheet_data.csv',
+    mime='text/csv'
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

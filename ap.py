@@ -23,6 +23,7 @@ headers = ['Date','Additional segment', 'Bank', 'Close account', 'Enable exchang
 sheet.update(values=[headers], range_name='A1:K1')
 
 today = datetime.date.today()
+st.title('Ticket Entry App')
 
 additional_segment = st.number_input('Additional segments', value=0)
 bank_account = st.number_input('Bank account', value=0)
@@ -35,7 +36,6 @@ other = st.number_input('Other tickets', value=0)
 complaints = st.number_input('Complaints', value=0)
 emails_related_shoonya = st.number_input('Emails related to shoonya', value=0)
 
-st.title('Ticket Entry App')
 
 if st.button("Submit"):
     # Prepare data row matching your headers

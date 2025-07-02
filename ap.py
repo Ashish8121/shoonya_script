@@ -35,7 +35,7 @@ other = st.number_input('Other tickets', value=0)
 complaints = st.number_input('Complaints', value=0)
 emails_related_shoonya = st.number_input('Emails related to shoonya', value=0)
 
-
+st.title('Ticket Entry App')
 
 if st.button("Submit"):
     # Prepare data row matching your headers

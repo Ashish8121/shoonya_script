@@ -4,3 +4,7 @@ datetime
 oauth2client
 google-auth
 streamlit 
+altair==4.2.2
+
+
+

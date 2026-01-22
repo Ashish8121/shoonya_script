@@ -88,29 +88,34 @@ if st.button("Submit"):
         st.success("✅ New entry added to Google Sheet.")
 
 # -------------------------
-# ✅ Display current data
+# ✅ Display current data safely
 # -------------------------
 
-MAX_CHARS = 1000
+# Truncate long strings aggressively to avoid LargeUtf8
+TRUNCATE_CHARS = 100  # keep 100 chars max for display
 
-# Convert records to DataFrame safely
 if records:
-    df = pd.DataFrame(records)
-    # Ensure all columns are string and truncate long values
-    for col in df.columns:
-        df[col] = df[col].astype(str).str.slice(0, MAX_CHARS)
+    df_display = pd.DataFrame(records)
+    for col in df_display.columns:
+        df_display[col] = df_display[col].astype(str).str.slice(0, TRUNCATE_CHARS)
 else:
-    df = pd.DataFrame(columns=headers)
+    df_display = pd.DataFrame(columns=headers)
 
-st.dataframe(df)
+st.dataframe(df_display)
 
-# CSV download
-csv = df.to_csv(index=False).encode('utf-8')
+# -------------------------
+# ✅ CSV download (full data, no truncation)
+# -------------------------
+
+if records:
+    df_csv = pd.DataFrame(records)
+else:
+    df_csv = pd.DataFrame(columns=headers)
+
+csv = df_csv.to_csv(index=False).encode('utf-8')
 st.download_button(
     label="Download Google Sheet as CSV",
     data=csv,
     file_name='google_sheet_data.csv',
     mime='text/csv'
 )
-
-

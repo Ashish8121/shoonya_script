@@ -93,13 +93,16 @@ if st.button("Submit"):
 
 # Convert all to string and truncate to prevent LargeUtf8 issue
 MAX_CHARS = 1000
-df = pd.DataFrame(records).applymap(lambda x: str(x)[:MAX_CHARS] if x is not None else "")
+
+# Display current data safely
+if records:
+    df = pd.DataFrame(records).applymap(lambda x: str(x)[:MAX_CHARS] if x is not None else "")
+else:
+    df = pd.DataFrame(columns=headers)
+
 st.dataframe(df)
 
-# -------------------------
-# ✅ Download CSV button
-# -------------------------
-
+# Download CSV button
 csv = df.to_csv(index=False).encode('utf-8')
 st.download_button(
     label="Download Google Sheet as CSV",
@@ -107,3 +110,4 @@ st.download_button(
     file_name='google_sheet_data.csv',
     mime='text/csv'
 )
+

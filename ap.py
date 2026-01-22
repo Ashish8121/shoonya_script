@@ -73,7 +73,9 @@ if st.button("Submit"):
 
 # Display current data
 records = sheet.get_all_records()
-st.dataframe(records)
+df = pd.DataFrame(records).astype(str)
+st.dataframe(df)
+
 
 # Download CSV button
 df = pd.DataFrame(records)
@@ -84,3 +86,4 @@ st.download_button(
     file_name='google_sheet_data.csv',
     mime='text/csv'
 )
+
